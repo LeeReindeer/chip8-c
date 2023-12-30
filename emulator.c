@@ -146,6 +146,7 @@ int main(int argc, char const* argv[]) {
         // DXYN draw(Vx, Vy, N)
         // Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels
         // and a height of N pixels.
+        chip8.reg[0xF] = 0;
         printf("draw(%d,%d,%d) %04X\n", chip8.reg[x] & (DISPLAY_WIDTH - 1),
                chip8.reg[y] & (DISPLAY_HEIGHT - 1), n, chip8.index_reg);
         // The starting position of the sprite will wrap
@@ -158,11 +159,17 @@ int main(int argc, char const* argv[]) {
             byte mask = 1 << (7 - width);
             byte pixel = (chip8.mem[index] & mask) >> (7 - width);
             // clip sprite out of edge
-            if (start_x + width >= DISPLAY_WIDTH ||
-                start_y + height >= DISPLAY_HEIGHT) {
+            byte cur_x = start_x + width;
+            byte cur_y = start_y + height;
+            if (cur_x >= DISPLAY_WIDTH || cur_y >= DISPLAY_HEIGHT) {
               continue;
             }
-            chip8.display[start_y + height][start_x + width] = pixel;
+            // VF is set to 1 if any screen pixels are flipped from set to unset
+            // when the sprite is drawn
+            if (chip8.display[cur_y][cur_x] && pixel) {
+              chip8.reg[0xF] = 0;
+            }
+            chip8.display[cur_y][cur_x] ^= pixel;
           }
           index++;
         }
