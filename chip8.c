@@ -1,5 +1,53 @@
 #include "chip8.h"
 
+long get_file_size(FILE* rom_file) {
+  if (rom_file == NULL) {
+    printf("open rom error\n");
+    return 1;
+  }
+  fseek(rom_file, 0L, SEEK_END);
+  long file_size = ftell(rom_file);
+  rewind(rom_file);
+  return file_size;
+}
+
+void print_hex(uint8_t* buffer, size_t size) {
+  for (int i = 0; i < size; i++) {
+    printf("%02X ", buffer[i]);
+    if ((i + 1) % 16 == 0) {
+      printf("\n");
+    }
+  }
+  printf("\n");
+}
+
+CHIP8 *chip8_init() {
+  CHIP8 *chip8 = malloc(sizeof(CHIP8));
+  memset(chip8, 0, sizeof(CHIP8));
+  chip8->pc = MEM_START;
+  return chip8;
+}
+
+uint8_t chip8_load_rom(CHIP8 *chip8, char *rom_name) {
+  FILE *rom_file = fopen(rom_name, "r");
+  long file_size = get_file_size(rom_file);
+  if (file_size >= MEM_SIZE - MEM_START) {
+    printf("memory overflow");
+    return 0;
+  }
+
+  uint8_t *rom = chip8->mem + MEM_START;  // 512
+  size_t result = fread(rom, 1, file_size, rom_file);
+  if (result != file_size) {
+    printf("read rom error\n");
+    return 0;
+  }
+  printf("rom size: %ld\n", file_size);
+  print_hex(rom, file_size);
+  fclose(rom_file);
+  return 1;
+}
+
 /**
  * Clear the screen
  */

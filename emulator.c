@@ -1,31 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "emulator.h"
 
 #include "chip8.h"
 
-CHIP8 *chip8;
-
-long get_file_size(FILE* rom_file) {
-  if (rom_file == NULL) {
-    printf("open rom error\n");
-    return 1;
-  }
-  fseek(rom_file, 0L, SEEK_END);
-  long file_size = ftell(rom_file);
-  rewind(rom_file);
-  return file_size;
-}
-
-void print_hex(uint8_t* buffer, size_t size) {
-  for (int i = 0; i < size; i++) {
-    printf("%02X ", buffer[i]);
-    if ((i + 1) % 16 == 0) {
-      printf("\n");
-    }
-  }
-  printf("\n");
-}
+CHIP8* chip8;
 
 void print_display() {
   for (byte row = 0; row < DISPLAY_HEIGHT; row++) {
@@ -41,38 +18,19 @@ void print_display() {
 }
 
 int main(int argc, char const* argv[]) {
-  chip8 = malloc(sizeof(CHIP8));
-  memset(chip8, 0, sizeof(CHIP8));
-
+  chip8 = chip8_init();
   // 1. load ROM file
-  printf("argc:%d\n", argc);
   char* rom_name;
   if (argc == 2) {
     rom_name = argv[1];
   } else {
     rom_name = "roms/IBM Logo.ch8";
   }
-
-  FILE* rom_file = fopen(rom_name, "r");
-  long file_size = get_file_size(rom_file);
-  if (file_size >= MEM_SIZE) {
-    printf("memory overflow");
-    return 1;
+  if (!chip8_load_rom(chip8, rom_name)) {
+    return -1;
   }
-
-  uint8_t* rom = chip8->mem + 0x200;  // 512
-  size_t result = fread(rom, 1, file_size, rom_file);
-  if (result != file_size) {
-    printf("read rom error\n");
-    return 1;
-  }
-  printf("rom size: %ld\n", file_size);
-  print_hex(rom, file_size);
-  fclose(rom_file);
-
   // 2. read opcode(16 bits)
   // 3. execute opcode
-  chip8->pc = 0x200;
   int i = 100;
   while (i--) {
     uint16_t opcode =
@@ -83,11 +41,6 @@ int main(int argc, char const* argv[]) {
     // printf("opcode: 0x%04X\n", opcode);
     byte type = (0xF000 & opcode) >> 12;
     // printf("type: %02x\n", type);
-    byte x = (0x0F00 & opcode) >> 8;
-    byte y = (0x00F0 & opcode) >> 4;
-    byte n = 0x000F & opcode;
-    byte nn = 0x00FF & opcode;
-    uint16_t nnn = 0x0FFF & opcode;
     switch (type) {
       case 0x0:
         if (opcode == 0x00E0) {

@@ -3,7 +3,7 @@
 > CHIP-8 is an interpreted programming language, developed by Joseph Weisbecker made on his 1802 Microprocessor. It was initially used on the COSMAC VIP and Telmac 1800 8-bit microcomputers in the mid-1970s. CHIP-8 programs are run on a CHIP-8 virtual machine. It was made to allow video games to be more easily programmed for these computers.
 >
 
-CHIP-8 是一种解释型语言，设计之初就是为了更新简单的编写和设计小游戏。我猜是作者嫌老机器的汇编语言太复杂繁琐，从而自己设计了一门汇编语言，并且摆脱硬件的束缚，在模拟器上运行。其实这个思想和Java等基于虚拟机的高级语言也是类似的，提供方便程序员编写的指令集，在硬件之上空架一层虚拟机，实现 Write Once, Run Everywhere”。
+CHIP-8 是一种解释型语言，设计之初就是为了更新简单的编写和设计小游戏。我猜是作者嫌老机器的汇编语言太复杂繁琐，从而自己设计了一门汇编语言，并且摆脱硬件的束缚，在模拟器上运行。其实这个思想和Java等基于虚拟机的高级语言也是类似的，提供方便程序员编写的指令集，在硬件之上空架一层虚拟机，实现 "Write Once, Run Everywhere"。
 
 ## [虚拟机描述](https://en.wikipedia.org/wiki/CHIP-8?useskin=vector#Virtual_machine_description)
 

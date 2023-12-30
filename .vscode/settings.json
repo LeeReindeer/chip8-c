@@ -4,6 +4,8 @@
     "chip8.h": "c",
     "inttypes.h": "c",
     "stdint.h": "c",
-    "cstdio": "c"
+    "cstdio": "c",
+    "stdio.h": "c",
+    "emulator.h": "c"
   }
 }

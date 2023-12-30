@@ -3,8 +3,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MEM_SIZE 4096
+#define MEM_START 0x200
 #define DISPLAY_HEIGHT 32
 #define DISPLAY_WIDTH 64
 
@@ -23,6 +26,10 @@ typedef struct chip8 {
   uint8_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH];
   uint8_t inputs[16];
 } CHIP8;
+
+CHIP8 *chip8_init();
+
+uint8_t chip8_load_rom(CHIP8 *chip8, char *rom_name);
 
 #define _OPCODE (chip8->opcode)
 #define X(opcode) (uint8_t)((0x0F00 & (opcode)) >> 8)
