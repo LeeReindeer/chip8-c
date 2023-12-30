@@ -3,6 +3,7 @@
     "stdlib.h": "c",
     "chip8.h": "c",
     "inttypes.h": "c",
-    "stdint.h": "c"
+    "stdint.h": "c",
+    "cstdio": "c"
   }
 }

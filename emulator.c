@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "chip8.h"
 
-CHIP8 chip8 = {0};
+CHIP8 *chip8;
 
 long get_file_size(FILE* rom_file) {
   if (rom_file == NULL) {
@@ -29,7 +30,7 @@ void print_hex(uint8_t* buffer, size_t size) {
 void print_display() {
   for (byte row = 0; row < DISPLAY_HEIGHT; row++) {
     for (byte col = 0; col < DISPLAY_WIDTH; col++) {
-      if (chip8.display[row][col]) {
+      if (chip8->display[row][col]) {
         printf("*");
       } else {
         printf(" ");
@@ -40,6 +41,9 @@ void print_display() {
 }
 
 int main(int argc, char const* argv[]) {
+  chip8 = malloc(sizeof(CHIP8));
+  memset(chip8, 0, sizeof(CHIP8));
+
   // 1. load ROM file
   printf("argc:%d\n", argc);
   char* rom_name;
@@ -56,7 +60,7 @@ int main(int argc, char const* argv[]) {
     return 1;
   }
 
-  uint8_t* rom = chip8.mem + 0x200;  // 512
+  uint8_t* rom = chip8->mem + 0x200;  // 512
   size_t result = fread(rom, 1, file_size, rom_file);
   if (result != file_size) {
     printf("read rom error\n");
@@ -68,13 +72,14 @@ int main(int argc, char const* argv[]) {
 
   // 2. read opcode(16 bits)
   // 3. execute opcode
-  chip8.pc = 0x200;
+  chip8->pc = 0x200;
   int i = 100;
   while (i--) {
     uint16_t opcode =
-        (0xFF00 & (chip8.mem[chip8.pc] << 8)) | chip8.mem[chip8.pc + 1];
-    // printf("pc: 0x%04X\n", chip8.pc);
-    chip8.pc += 2;
+        (0xFF00 & (chip8->mem[chip8->pc] << 8)) | chip8->mem[chip8->pc + 1];
+    chip8->opcode = opcode;
+    // printf("pc: 0x%04X\n", chip8->pc);
+    chip8->pc += 2;
     // printf("opcode: 0x%04X\n", opcode);
     byte type = (0xF000 & opcode) >> 12;
     // printf("type: %02x\n", type);
@@ -86,93 +91,53 @@ int main(int argc, char const* argv[]) {
     switch (type) {
       case 0x0:
         if (opcode == 0x00E0) {
-          printf("clear \n");
+          OPCODE(00E0);
         } else if (opcode == 0x00EE) {
           // 00EE return;
-          byte pc = chip8.stack[chip8.sp--];
-          chip8.pc = pc;
+          OPCODE(00EE);
         }
         break;
       case 0x1:
         // 1NNN goto NNN;
-        chip8.pc = nnn;
-        printf("goto %04X\n", nnn);
+        OPCODE(1NNN);
         break;
       case 0x2:
         // 2NNN *(0xNNN)();
-        chip8.stack[chip8.sp++] = chip8.pc;
-        chip8.pc = nnn;
+        OPCODE(2NNN);
         break;
       case 0x3:
         // 3XNN if (Vx == NN)
-        if (chip8.reg[x] == nn) {
-          chip8.pc += 2;
-        }
+        OPCODE(3XNN);
         break;
       case 0x4:
         // 4XNN if (Vx != NN)
-        if (chip8.reg[x] != nn) {
-          chip8.pc += 2;
-        }
+        OPCODE(4XNN);
         break;
       case 0x5:
         // 5XY0 if (Vx == Vy)
-        if (chip8.reg[x] == chip8.reg[y]) {
-          chip8.pc += 2;
-        }
+        OPCODE(5XY0);
         break;
       case 0x9:
         // 9XY0 if (Vx != Vy)
-        if (chip8.reg[x] != chip8.reg[y]) {
-          chip8.pc += 2;
-        }
+        OPCODE(9XY0);
         break;
       case 0x6:
         // 6XNN Vx = NN
-        chip8.reg[x] = nn;
-        printf("set V%d: %02X\n", x, nn);
+        OPCODE(6XNN);
         break;
       case 0x7:
         // 7XNN Vx += NN, not affect VF
-        chip8.reg[x] += nn;
-        printf("add V%d: %02X\n", x, nn);
+        OPCODE(7XNN);
         break;
       case 0xA:
         // ANNN I = NNN
-        chip8.index_reg = nnn;
-        printf("set I: %04X\n", nnn);
+        OPCODE(ANNN);
         break;
       case 0xD:
         // DXYN draw(Vx, Vy, N)
         // Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels
         // and a height of N pixels.
-        chip8.reg[0xF] = 0;
-        printf("draw(%d,%d,%d) %04X\n", chip8.reg[x] & (DISPLAY_WIDTH - 1),
-               chip8.reg[y] & (DISPLAY_HEIGHT - 1), n, chip8.index_reg);
-        // The starting position of the sprite will wrap
-        byte start_x = chip8.reg[x] & (DISPLAY_WIDTH - 1);
-        byte start_y = chip8.reg[y] & (DISPLAY_HEIGHT - 1);
-        uint16_t index = chip8.index_reg;
-        for (byte height = 0; height < n; height++) {
-          for (byte width = 0; width < 8; width++) {
-            // draw every byte
-            byte mask = 1 << (7 - width);
-            byte pixel = (chip8.mem[index] & mask) >> (7 - width);
-            // clip sprite out of edge
-            byte cur_x = start_x + width;
-            byte cur_y = start_y + height;
-            if (cur_x >= DISPLAY_WIDTH || cur_y >= DISPLAY_HEIGHT) {
-              continue;
-            }
-            // VF is set to 1 if any screen pixels are flipped from set to unset
-            // when the sprite is drawn
-            if (chip8.display[cur_y][cur_x] && pixel) {
-              chip8.reg[0xF] = 0;
-            }
-            chip8.display[cur_y][cur_x] ^= pixel;
-          }
-          index++;
-        }
+        OPCODE(DXYN);
         break;
       default:
         break;
