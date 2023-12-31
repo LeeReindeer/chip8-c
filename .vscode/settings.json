@@ -6,6 +6,7 @@
     "stdint.h": "c",
     "cstdio": "c",
     "stdio.h": "c",
-    "emulator.h": "c"
+    "emulator.h": "c",
+    "time.h": "c"
   }
 }
