@@ -11,6 +11,10 @@
 #define DISPLAY_HEIGHT 32
 #define DISPLAY_WIDTH 64
 
+#define FONTSET_SIZE 80
+#define FONTSET_MEM_START 0x50
+extern uint8_t chip8_fontset[];
+
 typedef uint8_t byte;
 
 typedef struct chip8 {
@@ -24,7 +28,7 @@ typedef struct chip8 {
   uint8_t delay_timer;
   uint8_t sound_timer;
   uint8_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH];
-  uint8_t inputs[16];
+  uint8_t input_keys[16]; // pressed or not
 } CHIP8;
 
 CHIP8 *chip8_init();
@@ -37,6 +41,11 @@ uint8_t chip8_load_rom(CHIP8 *chip8, char *rom_name);
 #define N(opcode) (uint8_t)(0x000F & (opcode))
 #define NN(opcode) (uint8_t)(0x00FF & (opcode))
 #define NNN(opcode) (uint16_t)(0x0FFF & (opcode))
+
+#define VX(opcode) (chip8->reg[X(opcode)])
+#define VY(opcode) (chip8->reg[Y(opcode)])
+#define _VF (chip8->reg[0xF])
+#define _I (chip8->index_reg)
 
 typedef void (*opcode_func)(CHIP8 *chip);
 #define OPCODE(N) opcode_##N(chip8)

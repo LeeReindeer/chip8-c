@@ -1,5 +1,5 @@
 all:
-	gcc emulator.c chip8.c -o emulator
+	gcc *.c -o emulator
 
 clean:
 	rm emulator
