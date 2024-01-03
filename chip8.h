@@ -6,8 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-// 2ms one cycle, 500 cycle one second
-#define CYCLE_DELAY 2
+// CHIP-8 run at 540 Hz
+#define CYCLE_FREQUENCY 540
+// delay around 1851 microseconds a cycle
+#define CYCLE_DELAY (1000000/CYCLE_FREQUENCY)
+// delay around 16666 microseconds to decrease timer
+#define TIMER_DELAY (1000000/60)
 
 #define MEM_SIZE 4096
 #define MEM_START 0x200
@@ -26,7 +30,7 @@ typedef struct chip8 {
   uint16_t index_reg;
   uint16_t pc;      // keep trace of opcode address
   uint16_t opcode;  // keep trace of opcode
-  uint16_t stack[12];
+  uint16_t stack[16];
   uint8_t sp;  // keep trace of stack top
   uint8_t delay_timer;
   uint8_t sound_timer;
@@ -39,6 +43,8 @@ CHIP8 *chip8_init();
 uint8_t chip8_load_rom(CHIP8 *chip8, char *rom_name);
 
 void chip8_cycle(CHIP8 *chip8);
+
+void chip8_timer(CHIP8 *chip8);
 
 #define _OPCODE (chip8->opcode)
 #define X(opcode) (uint8_t)((0x0F00 & (opcode)) >> 8)

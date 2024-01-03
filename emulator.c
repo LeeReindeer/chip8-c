@@ -23,6 +23,12 @@ long current_millis() {
   return time.tv_sec * 1000 + time.tv_usec / 1000;
 }
 
+long current_micros() {
+  struct timeval time;
+  gettimeofday(&time, NULL);
+  return time.tv_sec * 1000000 + time.tv_usec;
+}
+
 int main(int argc, char const* argv[]) {
   chip8 = chip8_init();
   if (!chip8) {
@@ -38,15 +44,20 @@ int main(int argc, char const* argv[]) {
   if (!chip8_load_rom(chip8, rom_name)) {
     return -1;
   }
-  long last_cycle_time = current_millis();
+  long last_cycle_time = current_micros();
+  long last_timer_time = current_micros();
   while (1) {
-    long now = current_millis();
+    long now = current_micros();
     // todo get any key pressed
     if (now - last_cycle_time >= CYCLE_DELAY) {
       last_cycle_time = now;
       chip8_cycle(chip8);
       // todo update display
     }
+    if (now - last_timer_time >= TIMER_DELAY) {
+      chip8_timer(chip8);
+    }
+    print_display();
   }
   return 0;
 }

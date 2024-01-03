@@ -212,8 +212,10 @@ void chip8_cycle(CHIP8 *chip8) {
     default:
       break;
   }
+}
 
- // update timers
+void chip8_timer(CHIP8 *chip8) {
+   // update timers
   if (chip8->delay_timer > 0) {
     chip8->delay_timer--;
   }
