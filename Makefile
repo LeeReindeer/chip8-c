@@ -5,5 +5,5 @@ clean:
 	rm emulator
 
 run: all
-	./emulator
+	./emulator 540 roms/Chip8\ Picture.ch8
 

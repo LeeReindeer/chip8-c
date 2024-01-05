@@ -3,11 +3,7 @@
 
 // macos `brew install SDL2`
 #include <SDL2/SDL.h>
-
-#define KEY_SIZE 16
-#define DISPLAY_WHITE 0xFFFFFFFF
-#define DISPLAY_BLACK 0x00000000
-
+#include "chip8.h"
 /**
 Keypad       Keyboard
 +-+-+-+-+    +-+-+-+-+
@@ -39,14 +35,14 @@ const static uint8_t KEY_MAP[KEY_SIZE] = {
     SDLK_v   // F
 };
 
-void init_display(const char *title, int scale, int width, int height);
+uint8_t init_display(const char *title, int scale, int width, int height);
 
 void close_display();
 
 void handle_display(void *display, int pitch);
 
-uint8_t handle_keypad(uint8_t *keys);
+void handle_keypad(uint8_t *keys, CHIP8 *chip8);
 
-void handle_sound(uint8_t beep);
+void handle_sound();
 
 #endif  //__PORT_H__

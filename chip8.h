@@ -9,20 +9,25 @@
 // CHIP-8 run at 540 Hz
 #define CYCLE_FREQUENCY 540
 // delay around 1851 microseconds a cycle
-#define CYCLE_DELAY(X) (1000000/(X))
+#define CYCLE_DELAY(X) (1000000 / (X))
 // delay around 16666 microseconds to decrease timer
-#define TIMER_DELAY (1000000/60)
+#define TIMER_DELAY (1000000 / 60)
 
 #define MEM_SIZE 4096
 #define MEM_START 0x200
 #define DISPLAY_HEIGHT 32
 #define DISPLAY_WIDTH 64
+#define KEY_SIZE 16
+#define DISPLAY_WHITE 0xFFFFFFFF
+#define DISPLAY_BLACK 0x00000000
 
 #define FONTSET_SIZE 80
 #define FONTSET_MEM_START 0x50
 extern uint8_t chip8_fontset[];
 
 typedef uint8_t byte;
+
+enum sys_state { SYS_QUIT, SYS_RUNNING, SYS_PAUSE };
 
 typedef struct chip8 {
   uint8_t mem[MEM_SIZE];
@@ -34,13 +39,13 @@ typedef struct chip8 {
   uint8_t sp;  // keep trace of stack top
   uint8_t delay_timer;
   uint8_t sound_timer;
-  // 32-bit pixel format can store RGB color information and an 8-bit transparency channel (alpha channel)
+  // 32-bit pixel format can store RGB color information and an 8-bit
+  // transparency channel (alpha channel)
   uint32_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH];
   uint8_t keys[16];  // pressed or not
 
   uint8_t display_refresh_flag;
-  uint8_t system_pause_flag;
-  uint8_t system_reload_flag;
+  enum sys_state state;
 } CHIP8;
 
 CHIP8 *chip8_init();

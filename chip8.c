@@ -53,7 +53,7 @@ CHIP8 *chip8_init() {
   for (int i = 0; i < FONTSET_SIZE; i++) {
     chip8->mem[FONTSET_MEM_START + i] = chip8_fontset[i];
   }
-  // init timers
+  chip8->state = SYS_RUNNING;
   return chip8;
 }
 
@@ -71,7 +71,6 @@ uint8_t chip8_load_rom(CHIP8 *chip8, const char *rom_name) {
     printf("read rom error\n");
     return 0;
   }
-  // printf("rom size: %ld\n", file_size);
   // print_hex(rom, file_size);
   fclose(rom_file);
   return 1;
