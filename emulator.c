@@ -1,6 +1,9 @@
 #include "emulator.h"
-#include "chip8.h"
+
 #include <sys/time.h>
+
+#include "chip8.h"
+#include "port.h"
 
 CHIP8* chip8;
 
@@ -35,29 +38,41 @@ int main(int argc, char const* argv[]) {
     return -1;
   }
   // 1. load ROM file
-  char* rom_name;
-  if (argc == 2) {
-    rom_name = argv[1];
+  const char* rom_name;
+  int frequency = CYCLE_FREQUENCY;
+  if (argc == 3) {
+    frequency = atoi(argv[1]);
+    rom_name = argv[2];
   } else {
-    rom_name = "roms/IBM Logo.ch8";
+    printf("usage: ./emulator <frequency> <rom name>\n");
+    return -1;
   }
   if (!chip8_load_rom(chip8, rom_name)) {
     return -1;
   }
+
+  init_display("CHIP-8", 10, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+
   long last_cycle_time = current_micros();
   long last_timer_time = current_micros();
-  while (1) {
+  uint8_t flag = 1;
+  while (flag) {
+    // get any key pressed
+    flag = handle_keypad(chip8->keys);
     long now = current_micros();
-    // todo get any key pressed
-    if (now - last_cycle_time >= CYCLE_DELAY) {
+    if (now - last_cycle_time >= CYCLE_DELAY(frequency)) {
       last_cycle_time = now;
       chip8_cycle(chip8);
-      // todo update display
+      // update display
+      if (chip8->display_refresh_flag) {
+        handle_display(chip8->display, sizeof(chip8->display[0]));
+      }
     }
     if (now - last_timer_time >= TIMER_DELAY) {
+      last_timer_time = now;
       chip8_timer(chip8);
     }
-    print_display();
   }
+  close_display();
   return 0;
 }

@@ -9,7 +9,7 @@
 // CHIP-8 run at 540 Hz
 #define CYCLE_FREQUENCY 540
 // delay around 1851 microseconds a cycle
-#define CYCLE_DELAY (1000000/CYCLE_FREQUENCY)
+#define CYCLE_DELAY(X) (1000000/(X))
 // delay around 16666 microseconds to decrease timer
 #define TIMER_DELAY (1000000/60)
 
@@ -34,13 +34,18 @@ typedef struct chip8 {
   uint8_t sp;  // keep trace of stack top
   uint8_t delay_timer;
   uint8_t sound_timer;
-  uint8_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH];
-  uint8_t input_keys[16];  // pressed or not
+  // 32-bit pixel format can store RGB color information and an 8-bit transparency channel (alpha channel)
+  uint32_t display[DISPLAY_HEIGHT][DISPLAY_WIDTH];
+  uint8_t keys[16];  // pressed or not
+
+  uint8_t display_refresh_flag;
+  uint8_t system_pause_flag;
+  uint8_t system_reload_flag;
 } CHIP8;
 
 CHIP8 *chip8_init();
 
-uint8_t chip8_load_rom(CHIP8 *chip8, char *rom_name);
+uint8_t chip8_load_rom(CHIP8 *chip8, const char *rom_name);
 
 void chip8_cycle(CHIP8 *chip8);
 

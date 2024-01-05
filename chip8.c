@@ -2,6 +2,8 @@
 
 #include <time.h>
 
+#include "port.h"
+
 uint8_t chip8_fontset[FONTSET_SIZE] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0,  // 0
     0x20, 0x60, 0x20, 0x20, 0x70,  // 1
@@ -55,7 +57,7 @@ CHIP8 *chip8_init() {
   return chip8;
 }
 
-uint8_t chip8_load_rom(CHIP8 *chip8, char *rom_name) {
+uint8_t chip8_load_rom(CHIP8 *chip8, const char *rom_name) {
   FILE *rom_file = fopen(rom_name, "r");
   long file_size = get_file_size(rom_file);
   if (file_size >= MEM_SIZE - MEM_START) {
@@ -69,8 +71,8 @@ uint8_t chip8_load_rom(CHIP8 *chip8, char *rom_name) {
     printf("read rom error\n");
     return 0;
   }
-  printf("rom size: %ld\n", file_size);
-  print_hex(rom, file_size);
+  // printf("rom size: %ld\n", file_size);
+  // print_hex(rom, file_size);
   fclose(rom_file);
   return 1;
 }
@@ -215,7 +217,7 @@ void chip8_cycle(CHIP8 *chip8) {
 }
 
 void chip8_timer(CHIP8 *chip8) {
-   // update timers
+  // update timers
   if (chip8->delay_timer > 0) {
     chip8->delay_timer--;
   }
@@ -229,15 +231,14 @@ void chip8_timer(CHIP8 *chip8) {
  */
 void opcode_00E0(CHIP8 *chip8) {
   memset(chip8->display, 0, sizeof(chip8->display));
-  printf("clear \n");
 }
 
 /**
  * Return from a subroutine
  */
 void opcode_00EE(CHIP8 *chip8) {
-  byte pc = chip8->stack[chip8->sp--];
-  chip8->pc = pc;
+  // attention please: decrease sp first
+  chip8->pc = chip8->stack[--(chip8->sp)];
 }
 
 /**
@@ -245,7 +246,6 @@ void opcode_00EE(CHIP8 *chip8) {
  */
 void opcode_1NNN(CHIP8 *chip8) {
   chip8->pc = NNN(_OPCODE);
-  printf("goto %04X\n", NNN(_OPCODE));
 }
 
 /**
@@ -288,7 +288,7 @@ void opcode_5XY0(CHIP8 *chip8) {
  */
 void opcode_6XNN(CHIP8 *chip8) {
   VX(_OPCODE) = NN(_OPCODE);
-  printf("set V%d: %02X\n", X(_OPCODE), NN(_OPCODE));
+  // printf("set V%d: %02X\n", X(_OPCODE), NN(_OPCODE));
 }
 
 /**
@@ -296,7 +296,7 @@ void opcode_6XNN(CHIP8 *chip8) {
  */
 void opcode_7XNN(CHIP8 *chip8) {
   VX(_OPCODE) += NN(_OPCODE);
-  printf("add V%d: %02X\n", X(_OPCODE), NN(_OPCODE));
+  // printf("add V%d: %02X\n", X(_OPCODE), NN(_OPCODE));
 }
 
 /**
@@ -384,7 +384,7 @@ void opcode_9XY0(CHIP8 *chip8) {
  */
 void opcode_ANNN(CHIP8 *chip8) {
   chip8->index_reg = NNN(_OPCODE);
-  printf("set I: %04X\n", NNN(_OPCODE));
+  // printf("set I: %04X\n", NNN(_OPCODE));
 }
 
 /**
@@ -408,8 +408,8 @@ void opcode_DXYN(CHIP8 *chip8) {
   int x = X(_OPCODE);
   int y = Y(_OPCODE);
   int n = N(_OPCODE);
-  printf("draw(%d,%d,%d) %04X\n", chip8->reg[x] & (DISPLAY_WIDTH - 1),
-         chip8->reg[y] & (DISPLAY_HEIGHT - 1), n, chip8->index_reg);
+  // printf("draw(%d,%d,%d) %04X\n", chip8->reg[x] & (DISPLAY_WIDTH - 1),
+  //  chip8->reg[y] & (DISPLAY_HEIGHT - 1), n, chip8->index_reg);
   // The starting position of the sprite will wrap
   byte start_x = chip8->reg[x] & (DISPLAY_WIDTH - 1);
   byte start_y = chip8->reg[y] & (DISPLAY_HEIGHT - 1);
@@ -424,12 +424,18 @@ void opcode_DXYN(CHIP8 *chip8) {
       if (cur_x >= DISPLAY_WIDTH || cur_y >= DISPLAY_HEIGHT) {
         continue;
       }
-      // VF is set to 1 if any screen pixels are flipped from set to unset
-      // when the sprite is drawn
-      if (chip8->display[cur_y][cur_x] && pixel) {
-        chip8->reg[0xF] = 1;
+      // VF is set to 1 if any screen pixels are flipped from set(white) to
+      // unset(black) when the sprite is drawn
+      // XOR
+      if (pixel) {
+        if (chip8->display[cur_y][cur_x] == DISPLAY_WHITE) {
+          chip8->reg[0xF] = 1;
+          chip8->display[cur_y][cur_x] = DISPLAY_BLACK;
+        } else {
+          chip8->display[cur_y][cur_x] = DISPLAY_WHITE;
+        }
+        chip8->display_refresh_flag = 1;
       }
-      chip8->display[cur_y][cur_x] ^= pixel;
     }
     index++;
   }
@@ -442,7 +448,7 @@ void opcode_EX9E(CHIP8 *chip8) {
   if (VX(_OPCODE) >= 16) {
     return;
   }
-  if (chip8->input_keys[VX(_OPCODE)]) {
+  if (chip8->keys[VX(_OPCODE)]) {
     chip8->pc += 2;
   }
 }
@@ -454,7 +460,7 @@ void opcode_EXA1(CHIP8 *chip8) {
   if (VX(_OPCODE) >= 16) {
     return;
   }
-  if (!(chip8->input_keys[VX(_OPCODE)])) {
+  if (!(chip8->keys[VX(_OPCODE)])) {
     chip8->pc += 2;
   }
 }
@@ -473,7 +479,7 @@ void opcode_FX07(CHIP8 *chip8) { VX(_OPCODE) = chip8->delay_timer; }
 void opcode_FX0A(CHIP8 *chip8) {
   byte key_pressed = 0;
   for (byte i = 0; i < 0xF; i++) {
-    if (chip8->input_keys[i]) {
+    if (chip8->keys[i]) {
       key_pressed = 1;
       VX(_OPCODE) = i;
     }
