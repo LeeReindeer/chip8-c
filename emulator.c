@@ -69,5 +69,6 @@ int main(int argc, char const* argv[]) {
     usleep(100);
   }
   close_display();
+  free(chip8);
   return 0;
 }
